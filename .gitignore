@@ -1,0 +1,12 @@
+.vscode
+
+objs
+*.o
+
+.DS_Store
+*.dSYM
+valgrind-out.txt
+
+*.out
+src/*
+!src/*.c
