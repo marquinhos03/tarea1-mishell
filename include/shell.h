@@ -17,8 +17,8 @@
 
 char *read_line();
 char **split_line(char *line);
-int new_process(char **args, t_redirection_type r_type, char *file_name);
-int execute_args(char **args, t_redirection_type r_type, char *file_name);
+int new_process(char **args, t_redirection_info redir_info);
+int execute_args(char **args, t_redirection_info redir_info);
 
 int command_exit(char **);
 

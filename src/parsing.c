@@ -44,7 +44,7 @@ char **buscar_token(char **args, char *token) {
     return NULL;
 }
 
-t_redirection_info get_redirection_info (char **args) {
+t_redirection_info get_redirection_info(char **args) {
     t_redirection_info current_info = {REDIR_NULL, NULL};
     char **operador;
 

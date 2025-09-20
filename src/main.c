@@ -22,7 +22,7 @@ void shell_interactive() {
         args = split_line(line);
         redir_info = get_redirection_info(args);
 
-        shell_status = execute_args(args, redir_info.type, redir_info.file_name);
+        shell_status = execute_args(args, redir_info);
 
         free(line);
         free(args);
@@ -35,7 +35,7 @@ void shell_interactive() {
     } while (shell_status == -1);
 }
 
-int execute_args(char **args, t_redirection_type r_type, char *file_name) {
+int execute_args(char **args, t_redirection_info redir_info) {
     char *integrated_command_list[] = {
         "exit"
     };
@@ -53,10 +53,10 @@ int execute_args(char **args, t_redirection_type r_type, char *file_name) {
         }
     }
 
-    return new_process(args, r_type, file_name);
+    return new_process(args, redir_info);
 }
 
-int new_process(char **args, t_redirection_type r_type, char *file_name) {
+int new_process(char **args, t_redirection_info redir_info) {
     pid_t pid;
     int status;
     
@@ -65,8 +65,8 @@ int new_process(char **args, t_redirection_type r_type, char *file_name) {
         /* Proceso hijo */
 
     
-        if (r_type != REDIR_NULL) {
-            fd_out(args, r_type, file_name);
+        if (redir_info.type != REDIR_NULL) {
+            fd_out(args, redir_info.type, redir_info.file_name);
         }
 
         if (execvp(args[0], args) < 1) {
