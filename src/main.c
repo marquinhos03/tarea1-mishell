@@ -1,74 +1,116 @@
 #include "include/shell.h"
+#include "include/defines.h"
 
-#define TOK_DELIM " \t\r\n\a\""
+int command_exit(char **args) {
+    if (args[1]) {
+        return atoi(args[1]);
+    }
+    else {
+        return 0;
+    }
+}
 
 void shell_interactive() {
     char *line;
     char **args;
-    int status = -1;
+    t_redirection_info redir_info;
+    int shell_status = -1;
 
-    while (1) {
-        printf("mishell$  ");
+    do {
+        printf(BOLD BLUE "mishell" RESET "$ ");
+        line = read_line();
+        args = split_line(line);
+        redir_info = get_redirection_info(args);
 
-        status++;
-        if (status >= 0) {
-            exit(status);
+        shell_status = execute_args(args, redir_info.type, redir_info.file_name);
+
+        free(line);
+        free(args);
+
+        if (shell_status >= 0) {
+            printf("Saliendo... valor shell_status: %d\n", shell_status);
+            exit(shell_status);
         }
-    }
+
+    } while (shell_status == -1);
 }
 
-/**
- * Dividir un string en multiples strings (substrings)
- */
-char **split_line(char *line) {
-    int bufsize = 64;
-    int i = 0;
-    char **tokens = malloc(bufsize * sizeof(char *));   /* sizeof(char *) -> 8 bytes */
-    char *token;
+int execute_args(char **args, t_redirection_type r_type, char *file_name) {
+    char *integrated_command_list[] = {
+        "exit"
+    };
+    int (*integrated_func_list[])(char **) = {
+        &command_exit
+    };
 
-    if (!tokens) {
-        perror("Error al asignar memoria en split_line: tokens\n");
+    if (args[0] == NULL) {
+        return -1;
+    }
+
+    for(int i = 0; i < sizeof(integrated_command_list) / sizeof(char *); i++) {
+        if (strcmp(args[0], integrated_command_list[i]) == 0) {
+            return (*integrated_func_list[i])(args);
+        }
+    }
+
+    return new_process(args, r_type, file_name);
+}
+
+int new_process(char **args, t_redirection_type r_type, char *file_name) {
+    pid_t pid;
+    int status;
+    
+    pid = fork();
+    if (pid == 0) {
+        /* Proceso hijo */
+
+    
+        if (r_type != REDIR_NULL) {
+            fd_out(args, r_type, file_name);
+        }
+
+        if (execvp(args[0], args) < 1) {
+            perror("error en new_process: proceso hijo");
+        }
         exit(EXIT_FAILURE);
     }
-
-    /* Busca en line hasta el primer delimitador */
-    token = strtok(line, TOK_DELIM);
-    while (token != NULL) {
-        tokens[i] = token;
-        i++;
-        
-        if (i >= bufsize) {
-            bufsize += bufsize;
-            tokens = realloc(tokens, bufsize * sizeof(char *));
-
-            if (!tokens) {
-                fprintf(stderr, "Error al reasignar memoria en split_line: tokens");
-                exit(EXIT_FAILURE);
-            }
-        }
-        /* NULL para que continue desde la ultima posición */
-        token = strtok(NULL, TOK_DELIM);
+    else if (pid < 0) {
+        /* Error en fork() */
+        perror("error en new_process: fork");
     }
-    tokens[i] = NULL;
-    
-    return tokens;
+    else {
+        /* Proceso padre */
+        do {
+            waitpid(pid, &status, WUNTRACED);
+
+            if (WIFEXITED(status)) {
+                printf("Hijo %d termina con estado = %d\n", pid, WEXITSTATUS(status));
+            }
+            else {
+                printf("Hijo %d termina mal\n", pid);
+            }
+
+            /**
+             * WIFEXITED() y WIFSIGNALED() distintos de cero (true) si el proceso hijo termino 
+             * de forma normal o fue terminado por una señal
+            */
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    }
+
+    return -1;
 }
 
-
 int main() {
-    
-    char *line;
-    char **args;
 
-    line = read_line();
-    args = split_line(line);
-
-    for (int i = 0; args[i] != NULL; i++) {
-        printf("Token %d: %s\n", i, args[i]);
-    }
-
-    free(line);
-    free(args);
+    shell_interactive();
 
     return 0;
 }
+
+
+/**
+ * Casos encontrados para solucionar:
+ * 
+ * Ejecutar el comando en mishell y terminal de ubuntu para visualizarlo mejor:
+ * cat include/shell.h
+ */

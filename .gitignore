@@ -8,5 +8,6 @@ objs
 valgrind-out.txt
 
 *.out
+*.txt
 src/*
 !src/*.c

@@ -1,5 +1,8 @@
 #include "include/shell.h"
 
+/**
+ * Leer la linea de entrada por teclado
+ */
 char *read_line() {
     char *line = NULL;
     size_t bufsize = 0;
@@ -28,14 +31,14 @@ char *read_line() {
 /**
  * Dividir el string de entrada en multiples strings (substrings)
  */
-char **parse_line(char *line) {
+char **split_line(char *line) {
     int bufsize = 64;
     int c = 0;
     char **tokens = malloc(bufsize * sizeof(char *));   /* sizeof(char *) -> 8 bytes */
     char *token;
 
     if (!tokens) {
-        perror("error al asignar memoria en parse_line: tokens\n");
+        perror("error al asignar memoria en split_line: tokens\n");
         exit(EXIT_FAILURE);
     }
 
@@ -50,7 +53,7 @@ char **parse_line(char *line) {
             tokens = realloc(tokens, bufsize * sizeof(char *));
 
             if (!tokens) {
-                perror("error al reasignar memoria en parse_line: tokens");
+                perror("error al reasignar memoria en split_line: tokens");
                 exit(EXIT_FAILURE);
             }
         }

@@ -8,15 +8,22 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include "defines.h"
 
 #define TOKEN_DELIM " \t\r\n\a\""
 
 /*Prototipos de función*/
-char *read_line();
-char **parse_line(char *line);
-int new_process(char **args);
-int execute_args(char **args);
 
-int own_exit(char **);
+char *read_line();
+char **split_line(char *line);
+int new_process(char **args, t_redirection_type r_type, char *file_name);
+int execute_args(char **args, t_redirection_type r_type, char *file_name);
+
+int command_exit(char **);
+
+int fd_out(char **args, t_redirection_type type, char *file_name);
+char **buscar_token(char **args, char *token);
+t_redirection_info get_redirection_info (char **args);
 
 #endif
