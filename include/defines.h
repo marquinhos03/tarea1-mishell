@@ -2,6 +2,7 @@
 #define DEFINES_H
 
 #define BLUE "\x1b[34m"
+#define RED "\x1b[31m"
 #define RESET "\x1b[0m"
 #define BOLD "\x1b[1m"
 

@@ -65,3 +65,45 @@ char **split_line(char *line) {
     
     return tokens;
 }
+
+int contar_comandos_pipeline(char **args) {
+    int n_comandos = 0;
+    for (int i = 0; args[i] != NULL; i++) {
+        if (strcmp(args[i], "|") == 0) {
+            n_comandos++;
+        }
+    }
+    n_comandos++;   /* +1 para el primer comando */
+    return n_comandos;
+}
+
+char ***parse_pipeline(char **args, int n_comandos) {
+    char ***comandos = malloc((n_comandos + 1) * sizeof(char **));   /* sizeof(char *) -> 8 bytes */
+    if (!comandos) {
+        perror("error al asignar memoria en split_line: comandos\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int c_index = 0;
+    int token_index = 0;
+
+    while (c_index < n_comandos) {
+        comandos[c_index] = &args[token_index];
+
+        /* Encuentra el final del comando si "|" o el fin de los argumentos si NULL */
+        while (args[token_index] != NULL && strcmp(args[token_index], "|") != 0) {
+            token_index++;
+        }
+
+        /* Reemplazar "|" por NULL para indicar el final del argumento del comando encontrado */
+        if (args[token_index] != NULL) {
+            args[token_index] = NULL;
+            token_index++;
+        }
+        c_index++;
+    }
+    /* NULL para indicar el final de los argumentos del array de comandos */
+    comandos[c_index] = NULL;
+
+    return comandos;
+}
