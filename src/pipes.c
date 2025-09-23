@@ -64,7 +64,7 @@ int *crear_pipes(int n_comandos) {
     return pipes_arr;
 }
 
-void ejecutar_pipeline(int n_comandos, int *pipes, char ***comandos) {
+void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
     pid_t pids[n_comandos]; /* n_comandos <=> n procesos hijos */
     int n_fd_pipes = (n_comandos - 1) * 2;  /* n pipes * 2 <=> n descriptores de archivo */
 
@@ -81,10 +81,11 @@ void ejecutar_pipeline(int n_comandos, int *pipes, char ***comandos) {
 
             /* Caso 1: Primer comando*/
             if (i == 0) {
-                dup2(pipes[1], STDOUT_FILENO);  /* 1: pipe extremo lectura */
+                dup2(pipes_arr[1], STDOUT_FILENO);  /* 1: pipe extremo lectura */
             }
             /* Caso 2: Ultimo comando */
-            else if (i == n_comandos - 1) {
+            else if (i == n_comandos - 1) {                
+                dup2(pipes_arr[(i - 1) * 2], STDIN_FILENO); /* (i - 1) * 2: pipe extremo escritura */
 
                 /* Caso: Hay operador de redirección */
                 t_redirection_info info;
@@ -93,18 +94,16 @@ void ejecutar_pipeline(int n_comandos, int *pipes, char ***comandos) {
                 if (info.type != REDIR_NULL) {
                     fd_out(info.type, info.file_name);
                 }
-                
-                dup2(pipes[(i - 1) * 2], STDIN_FILENO); /* (i - 1) * 2: pipe extremo escritura */
             }
             /* Caso 3: Comandos intermedios */
             else {
-                dup2(pipes[(i - 1) * 2], STDIN_FILENO); /* pipe extremo escritura */
-                dup2(pipes[(i * 2) + 1], STDOUT_FILENO);    /* pipe extremo lectura*/
+                dup2(pipes_arr[(i - 1) * 2], STDIN_FILENO); /* pipe extremo escritura */
+                dup2(pipes_arr[(i * 2) + 1], STDOUT_FILENO);    /* pipe extremo lectura*/
             }
 
             /* Proceso hijo cierra pipes que no va a usar */
             for (int j = 0; j < n_fd_pipes; j++) {
-                close(pipes[j]);
+                close(pipes_arr[j]);
             }
 
             execvp(comandos[i][0], comandos[i]);
@@ -117,7 +116,7 @@ void ejecutar_pipeline(int n_comandos, int *pipes, char ***comandos) {
 
     /* Proceso padre cierra pipes para no bloquear los hijos */
     for (int j = 0; j < n_fd_pipes; j++) {
-        close(pipes[j]);
+        close(pipes_arr[j]);
     }
 
     /* Proceso padre espera a todos sus hijos */
@@ -126,6 +125,7 @@ void ejecutar_pipeline(int n_comandos, int *pipes, char ***comandos) {
     }
 }
 
+/*
 int main() {
     char *line;
     char **args;
@@ -154,3 +154,4 @@ int main() {
 
     return 0;
 }
+    */

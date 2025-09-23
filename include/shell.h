@@ -20,8 +20,10 @@ char *read_line();
 char **split_line(char *line);
 
 // pipes.c
-char ***parse_pipeline(char **args, int n_comandos);
 int contar_comandos_pipeline(char **args);
+char ***parse_pipeline(char **args, int n_comandos);
+int *crear_pipes(int n_comandos);
+void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos);
 
 int simple_command(char **args, t_redirection_info redir_info);
 int execute_args(char **args, t_redirection_info redir_info);

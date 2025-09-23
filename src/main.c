@@ -1,6 +1,8 @@
 #include "include/shell.h"
 #include "include/defines.h"
 
+#define CONTINUE -1
+
 int command_exit(char **args) {
     if (args[1]) {
         return atoi(args[1]);
@@ -14,14 +16,15 @@ void shell_interactive() {
     char *line;
     char **args;
     t_redirection_info redir_info;
-    int shell_status = -1;
+    int shell_status = CONTINUE;
 
     do {
         printf(BOLD BLUE "mishell" RESET "$ ");
         line = read_line();
         args = split_line(line);
+        /* fixear esto */
         redir_info = get_redirection_info(args);
-
+        /**/
         shell_status = execute_args(args, redir_info);
 
         free(line);
@@ -32,7 +35,7 @@ void shell_interactive() {
             exit(shell_status);
         }
 
-    } while (shell_status == -1);
+    } while (shell_status == CONTINUE);
 }
 
 int execute_args(char **args, t_redirection_info redir_info) {
@@ -44,7 +47,7 @@ int execute_args(char **args, t_redirection_info redir_info) {
     };
 
     if (args[0] == NULL) {
-        return -1;
+        return CONTINUE;
     }
 
     for(int i = 0; i < sizeof(integrated_command_list) / sizeof(char *); i++) {
@@ -53,10 +56,22 @@ int execute_args(char **args, t_redirection_info redir_info) {
         }
     }
 
-    return new_process(args, redir_info);
+    int n_comandos = contar_comandos_pipeline(args);
+    if (n_comandos > 1) {
+        char ***comandos = parse_pipeline(args, n_comandos);
+        int *pipes_arr = crear_pipes(n_comandos);
+        ejecutar_pipeline(n_comandos, pipes_arr, comandos);
+        
+        free(pipes_arr);
+        free(comandos);
+
+        return CONTINUE;
+    }
+
+    return simple_command(args, redir_info);
 }
 
-int new_process(char **args, t_redirection_info redir_info) {
+int simple_command(char **args, t_redirection_info redir_info) {
     pid_t pid;
     int status;
     
@@ -64,19 +79,20 @@ int new_process(char **args, t_redirection_info redir_info) {
     if (pid == 0) {
         /* Proceso hijo */
 
-    
+        /* Caso: Hay operador de redirección */
         if (redir_info.type != REDIR_NULL) {
-            fd_out(args, redir_info.type, redir_info.file_name);
+            fd_out(redir_info.type, redir_info.file_name);
         }
 
-        if (execvp(args[0], args) < 1) {
-            perror("error en new_process: proceso hijo");
-        }
-        exit(EXIT_FAILURE);
+        execvp(args[0], args);
+
+        /* Solo se ejecuta si hay error */
+        perror("execvp error en simple_command");
+        _exit(EXIT_FAILURE);
     }
     else if (pid < 0) {
         /* Error en fork() */
-        perror("error en new_process: fork");
+        perror("error en simple_command: fork");
     }
     else {
         /* Proceso padre */
@@ -97,7 +113,7 @@ int new_process(char **args, t_redirection_info redir_info) {
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
 
-    return -1;
+    return CONTINUE;
 }
 
 int main() {
@@ -106,11 +122,3 @@ int main() {
 
     return 0;
 }
-
-
-/**
- * Casos encontrados para solucionar:
- * 
- * Ejecutar el comando en mishell y terminal de ubuntu para visualizarlo mejor:
- * cat include/shell.h
- */
