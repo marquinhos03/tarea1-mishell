@@ -23,9 +23,9 @@ void shell_interactive() {
         line = read_line();
         args = split_line(line);
         /* fixear esto */
-        redir_info = get_redirection_info(args);
+        // redir_info = get_redirection_info(args);
         /**/
-        shell_status = execute_args(args, redir_info);
+        shell_status = execute_args(args);
 
         free(line);
         free(args);
@@ -38,7 +38,7 @@ void shell_interactive() {
     } while (shell_status == CONTINUE);
 }
 
-int execute_args(char **args, t_redirection_info redir_info) {
+int execute_args(char **args) {
     char *integrated_command_list[] = {
         "exit"
     };
@@ -68,10 +68,10 @@ int execute_args(char **args, t_redirection_info redir_info) {
         return CONTINUE;
     }
 
-    return simple_command(args, redir_info);
+    return simple_command(args);
 }
 
-int simple_command(char **args, t_redirection_info redir_info) {
+int simple_command(char **args) {
     pid_t pid;
     int status;
     
@@ -80,8 +80,11 @@ int simple_command(char **args, t_redirection_info redir_info) {
         /* Proceso hijo */
 
         /* Caso: Hay operador de redirección */
-        if (redir_info.type != REDIR_NULL) {
-            fd_out(redir_info.type, redir_info.file_name);
+        t_redirection_info info;
+        info = get_redirection_info(args);
+
+        if (info.type != REDIR_NULL) {
+            fd_out(info.type, info.file_name);
         }
 
         execvp(args[0], args);

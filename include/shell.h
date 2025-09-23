@@ -25,8 +25,8 @@ char ***parse_pipeline(char **args, int n_comandos);
 int *crear_pipes(int n_comandos);
 void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos);
 
-int simple_command(char **args, t_redirection_info redir_info);
-int execute_args(char **args, t_redirection_info redir_info);
+int simple_command(char **args);
+int execute_args(char **args);
 
 
 int command_exit(char **);
