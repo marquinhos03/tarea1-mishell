@@ -1,7 +1,7 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-/*Librerias*/
+/* Librerias */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,18 +15,21 @@
 
 /*Prototipos de función*/
 
+// input.c
 char *read_line();
 char **split_line(char *line);
+
+// pipes.c
 char ***parse_pipeline(char **args, int n_comandos);
 int contar_comandos_pipeline(char **args);
 
-int new_process(char **args, t_redirection_info redir_info);
+int simple_command(char **args, t_redirection_info redir_info);
 int execute_args(char **args, t_redirection_info redir_info);
 
 
 int command_exit(char **);
 
-int fd_out(char **args, t_redirection_type type, char *file_name);
+void fd_out(t_redirection_type type, char *file_name);
 char **buscar_token(char **args, char *token);
 t_redirection_info get_redirection_info (char **args);
 

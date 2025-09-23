@@ -2,12 +2,12 @@
 #include "include/defines.h"
 
 char *redirection_string[] = {
-    ">",
-    ">>",
-    NULL
+    ">",    // REDIR_TRUNC
+    ">>",   // REDIR_APPEND
+    NULL    // REDIR_NULL
 };
 
-int fd_out(char **args, t_redirection_type type, char *file_name) {
+void fd_out(t_redirection_type type, char *file_name) {
     int file_fd;
     int flags;
 
@@ -29,8 +29,6 @@ int fd_out(char **args, t_redirection_type type, char *file_name) {
     }
 
     close(file_fd);
-
-    return 0;
 }
 
 char **buscar_token(char **args, char *token) {
@@ -49,13 +47,15 @@ t_redirection_info get_redirection_info(char **args) {
     char **operador;
 
     int i = 0;
-    while(redirection_string[i] != NULL) {
+    while (redirection_string[i] != NULL) {
+        /* Buscar operador y retornar la dirección del operador en args */
         operador = buscar_token(args, redirection_string[i]);
 
         if (operador) {
             current_info.type = (t_redirection_type)i;
             current_info.file_name = *(operador + 1);
 
+            /* Reemplazar operador por NULL en el array args */
             *operador = NULL;
 
             return current_info;

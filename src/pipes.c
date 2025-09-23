@@ -1,6 +1,49 @@
 #include "include/shell.h"
 #include "include/defines.h"
 
+int contar_comandos_pipeline(char **args) {
+    int n_comandos = 0;
+    for (int i = 0; args[i] != NULL; i++) {
+        if (strcmp(args[i], "|") == 0) {
+            n_comandos++;
+        }
+    }
+    n_comandos++;   /* +1 para el primer comando */
+    return n_comandos;
+}
+
+char ***parse_pipeline(char **args, int n_comandos) {
+    char ***comandos = malloc((n_comandos + 1) * sizeof(char **));   /* sizeof(char *) -> 8 bytes */
+    if (!comandos) {
+        perror("error al asignar memoria en split_line: comandos\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int c_index = 0;
+    int token_index = 0;
+
+    while (c_index < n_comandos) {
+        comandos[c_index] = &args[token_index];
+
+        /* Encuentra el final del comando si "|" o el fin de los argumentos si NULL */
+        while (args[token_index] != NULL && strcmp(args[token_index], "|") != 0) {
+            token_index++;
+        }
+
+        /* Reemplazar "|" por NULL para indicar el final del argumento del comando encontrado */
+        if (args[token_index] != NULL) {
+            args[token_index] = NULL;
+            token_index++;
+        }
+        c_index++;
+    }
+    /* NULL para indicar el final de los argumentos del array de comandos */
+    comandos[c_index] = NULL;
+
+    return comandos;
+}
+
+
 int *crear_pipes(int n_comandos) {
     int n_pipes = n_comandos - 1;
 
@@ -42,6 +85,15 @@ void ejecutar_pipeline(int n_comandos, int *pipes, char ***comandos) {
             }
             /* Caso 2: Ultimo comando */
             else if (i == n_comandos - 1) {
+
+                /* Caso: Hay operador de redirección */
+                t_redirection_info info;
+                info = get_redirection_info(comandos[i]);
+
+                if (info.type != REDIR_NULL) {
+                    fd_out(info.type, info.file_name);
+                }
+                
                 dup2(pipes[(i - 1) * 2], STDIN_FILENO); /* (i - 1) * 2: pipe extremo escritura */
             }
             /* Caso 3: Comandos intermedios */
@@ -57,7 +109,7 @@ void ejecutar_pipeline(int n_comandos, int *pipes, char ***comandos) {
 
             execvp(comandos[i][0], comandos[i]);
             
-            /* Solo se ejecuta si hay error */
+            /* Solo se ejecuta si execvp da error */
             perror("execvp error en ejecutar_pipeline");
             _exit(EXIT_FAILURE);
         }
@@ -97,7 +149,6 @@ int main() {
     ejecutar_pipeline(n_comandos, pipes, comandos);
 
     free(line);
-    free(args);
     free(pipes);
     free(comandos);
 
