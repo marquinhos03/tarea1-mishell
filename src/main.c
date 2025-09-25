@@ -1,7 +1,6 @@
 #include "include/shell.h"
 #include "include/defines.h"
 
-#define CONTINUE -1
 
 int command_exit(char **args) {
     if (args[1]) {
@@ -15,23 +14,18 @@ int command_exit(char **args) {
 void shell_interactive() {
     char *line;
     char **args;
-    t_redirection_info redir_info;
     int shell_status = CONTINUE;
 
     do {
         printf(BOLD BLUE "mishell" RESET "$ ");
         line = read_line();
         args = split_line(line);
-        /* fixear esto */
-        // redir_info = get_redirection_info(args);
-        /**/
         shell_status = execute_args(args);
 
         free(line);
         free(args);
 
         if (shell_status >= 0) {
-            printf("Saliendo... valor shell_status: %d\n", shell_status);
             exit(shell_status);
         }
 
@@ -46,6 +40,7 @@ int execute_args(char **args) {
         &command_exit
     };
 
+    /* Si se pulso Enter */
     if (args[0] == NULL) {
         return CONTINUE;
     }
@@ -56,7 +51,15 @@ int execute_args(char **args) {
         }
     }
 
+    /* Si se ejecuto el comando execute_miprof */
+    if (strcmp(args[0], "miprof") == 0) {
+        int current_status;
+        
+        return execute_miprof(args);
+    }
+
     int n_comandos = contar_comandos_pipeline(args);
+    /* Si se ingreso una pipeline */
     if (n_comandos > 1) {
         char ***comandos = parse_pipeline(args, n_comandos);
         int *pipes_arr = crear_pipes(n_comandos);
@@ -101,14 +104,6 @@ int simple_command(char **args) {
         /* Proceso padre */
         do {
             waitpid(pid, &status, WUNTRACED);
-
-            if (WIFEXITED(status)) {
-                printf("Hijo %d termina con estado = %d\n", pid, WEXITSTATUS(status));
-            }
-            else {
-                printf("Hijo %d termina mal\n", pid);
-            }
-
             /**
              * WIFEXITED() y WIFSIGNALED() distintos de cero (true) si el proceso hijo termino 
              * de forma normal o fue terminado por una señal

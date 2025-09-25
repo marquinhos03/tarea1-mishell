@@ -43,7 +43,6 @@ char ***parse_pipeline(char **args, int n_comandos) {
     return comandos;
 }
 
-
 int *crear_pipes(int n_comandos) {
     int n_pipes = n_comandos - 1;
 

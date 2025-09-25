@@ -1,4 +1,5 @@
 .vscode
+.build
 
 objs
 *.o
@@ -7,6 +8,7 @@ objs
 *.dSYM
 valgrind-out.txt
 
+*.json
 *.out
 *.txt
 src/*
