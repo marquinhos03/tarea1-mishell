@@ -1,5 +1,4 @@
 #include "include/shell.h"
-#include "include/defines.h"
 
 int contar_comandos_pipeline(char **args) {
     int n_comandos = 0;
@@ -87,11 +86,11 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
                 dup2(pipes_arr[(i - 1) * 2], STDIN_FILENO); /* (i - 1) * 2: pipe extremo escritura */
 
                 /* Caso: Hay operador de redirección */
-                t_redirection_info info;
+                redirection_info info;
                 info = get_redirection_info(comandos[i]);
 
                 if (info.type != REDIR_NULL) {
-                    fd_out(info.type, info.file_name);
+                    redirect_stdout_to_file(info.type, info.file_name);
                 }
             }
             /* Caso 3: Comandos intermedios */
@@ -123,34 +122,3 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
         waitpid(pids[i], NULL, 0);
     }
 }
-
-/*
-int main() {
-    char *line;
-    char **args;
-
-    // cat txt1.txt | grep "hola" | wc
-    printf("Comando: ");
-    line = read_line();
-    args = split_line(line);
-
-    int n_comandos = contar_comandos_pipeline(args);
-    char ***comandos = parse_pipeline(args, n_comandos);
-    int *pipes = crear_pipes(n_comandos);
-
-    for (int i = 0; comandos[i] != NULL; i++) {
-        for (int j = 0; comandos[i][j] != NULL; j++) {
-            printf("%s ", comandos[i][j]);
-        }
-        printf("\n");
-    }
-
-    ejecutar_pipeline(n_comandos, pipes, comandos);
-
-    free(line);
-    free(pipes);
-    free(comandos);
-
-    return 0;
-}
-    */

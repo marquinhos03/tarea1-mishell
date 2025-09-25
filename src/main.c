@@ -1,6 +1,4 @@
 #include "include/shell.h"
-#include "include/defines.h"
-
 
 int command_exit(char **args) {
     if (args[1]) {
@@ -51,7 +49,7 @@ int execute_args(char **args) {
         }
     }
 
-    /* Si se ejecuto el comando execute_miprof */
+    /* Si se ejecuto el comando miprof */
     if (strcmp(args[0], "miprof") == 0) {
         int current_status;
         
@@ -83,11 +81,11 @@ int simple_command(char **args) {
         /* Proceso hijo */
 
         /* Caso: Hay operador de redirección */
-        t_redirection_info info;
+        redirection_info info;
         info = get_redirection_info(args);
 
         if (info.type != REDIR_NULL) {
-            fd_out(info.type, info.file_name);
+            redirect_stdout_to_file(info.type, info.file_name);
         }
 
         execvp(args[0], args);

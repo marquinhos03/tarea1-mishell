@@ -12,7 +12,6 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include "defines.h"
 
 /* --- DEFINES --- */
 
@@ -21,6 +20,37 @@
 #define MIPROF_EJEC "ejec"
 #define MIPROF_EJECSAVE "ejecsave"
 
+#define BLUE "\x1b[34m"
+#define RED "\x1b[31m"
+#define RESET "\x1b[0m"
+#define BOLD "\x1b[1m"
+
+/* --- Definiciones de tipos --- */
+
+// Redirección
+typedef enum e_redirection_type {
+    REDIR_TRUNC,    // >
+    REDIR_APPEND,   // >>
+    REDIR_NULL
+} redirection_type;
+
+typedef struct s_redirection_info {
+    redirection_type type;
+    char *file_name;
+} redirection_info;
+
+// miprof
+typedef struct s_miprof_info {
+    int status;
+    double tiempo_usuario;
+    double tiempo_sistema;
+    double tiempo_real;
+    long maximum_resident_set;
+} miprof_info;
+
+/* --- Variables globales --- */
+
+extern char *redirection_string[];
 
 /* --- Prototipos de función --- */
 
@@ -36,24 +66,17 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos);
 
 int simple_command(char **args);
 int execute_args(char **args);
+int command_exit(char **);
 
 // miprof.c
-typedef struct s_miprof_info {
-    double tiempo_usuario;
-    double tiempo_sistema;
-    double tiempo_real;
-    long maximum_resident_set;
-} miprof_info;
-
 int execute_miprof(char **args);
-int miprof_ejec(char **args, char *file_name);
+miprof_info miprof_ejec(char **args);
 int miprof_ejecsave(char *file_name, char *command_name, miprof_info command_info);
 miprof_info get_miprof_info(struct rusage usage, struct timespec start_time, struct timespec end_time);
 
-int command_exit(char **);
-
-void fd_out(t_redirection_type type, char *file_name);
+// redirection.c
+void redirect_stdout_to_file(redirection_type type, char *file_name);
 char **buscar_token(char **args, char *token);
-t_redirection_info get_redirection_info (char **args);
+redirection_info get_redirection_info (char **args);
 
 #endif
