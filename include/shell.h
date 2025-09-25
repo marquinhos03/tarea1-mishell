@@ -20,10 +20,10 @@
 #define MIPROF_EJEC "ejec"
 #define MIPROF_EJECSAVE "ejecsave"
 
-#define BLUE "\x1b[34m"
-#define RED "\x1b[31m"
+#define LGREEN "\x1B[38;2;17;245;120m"
 #define RESET "\x1b[0m"
 #define BOLD "\x1b[1m"
+#define PROMPT BOLD LGREEN "mishell" RESET "$ "
 
 /* --- Definiciones de tipos --- */
 

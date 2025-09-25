@@ -1,40 +1,14 @@
 #include "include/shell.h"
 
-int execute_miprof(char **args) {
-    char **comando;
+miprof_info get_miprof_info(struct rusage usage, struct timespec start_time, struct timespec end_time) {
     miprof_info command_info;
+    
+    command_info.tiempo_usuario = (double)(usage.ru_utime.tv_sec) + (double)(usage.ru_utime.tv_usec) / 1000000.0;
+    command_info.tiempo_sistema = (double)(usage.ru_stime.tv_sec) + (double)(usage.ru_stime.tv_usec) / 1000000.0;
+    command_info.tiempo_real = (double)(end_time.tv_sec - start_time.tv_sec) + (double)(end_time.tv_nsec - start_time.tv_nsec) / 1000000000.0;
+    command_info.maximum_resident_set = usage.ru_maxrss;
 
-    if (strcmp(args[1], MIPROF_EJEC) == 0) {
-        /* Si se ejecuto miprof ejec */
-        comando = &args[2];
-        command_info = miprof_ejec(comando);
-
-        printf("\nTiempo de ejecución Usuario: %.5f segundos\n", command_info.tiempo_usuario);
-        printf("Tiempo de ejecución Sistema: %.5f segundos\n", command_info.tiempo_sistema);
-        printf("Tiempo de ejecución Real: %.5f segundos\n", command_info.tiempo_real);
-        printf("Peak de memoria máxima residente: %ld KB\n", command_info.maximum_resident_set);
-    }
-    else if (strcmp(args[1], MIPROF_EJECSAVE) == 0) {
-        /* Si se ejecuto miprof ejecsave*/
-        comando = &args[3];
-        char *file_name = args[2];
-        command_info = miprof_ejec(comando);
-
-        if (command_info.status < 0) {
-            /* Si no se ingreso archivo para guardar */
-            printf("Comando 'miprof %s %s' no válido\n", args[1], args[2]);
-            return CONTINUE;
-        }
-
-        return miprof_ejecsave(file_name, args[3], command_info);
-    }
-    else {
-        /* Si se ingreso mal el comando */
-        printf("Comando 'miprof %s' no válido\n", args[1]);
-        printf("Uso: miprof [ejec | ejecsave archivo] comando args\n");
-    }
-
-    return CONTINUE;
+    return command_info;
 }
 
 miprof_info miprof_ejec(char **args) {
@@ -63,10 +37,6 @@ miprof_info miprof_ejec(char **args) {
         
         do {
             wait4(pid, &status, WUNTRACED, &usage);
-            /**
-             * WIFEXITED() y WIFSIGNALED() distintos de cero (true) si el proceso hijo termino 
-             * de forma normal o fue terminado por una señal
-            */
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
         clock_gettime(CLOCK_REALTIME, &end_time);   // Tiempo final
@@ -114,13 +84,39 @@ int miprof_ejecsave(char *file_name, char *command_name, miprof_info command_inf
     return CONTINUE;
 }
 
-miprof_info get_miprof_info(struct rusage usage, struct timespec start_time, struct timespec end_time) {
+int execute_miprof(char **args) {
+    char **comando;
     miprof_info command_info;
-    
-    command_info.tiempo_usuario = (double)(usage.ru_utime.tv_sec) + (double)(usage.ru_utime.tv_usec) / 1000000.0;
-    command_info.tiempo_sistema = (double)(usage.ru_stime.tv_sec) + (double)(usage.ru_stime.tv_usec) / 1000000.0;
-    command_info.tiempo_real = (double)(end_time.tv_sec - start_time.tv_sec) + (double)(end_time.tv_nsec - start_time.tv_nsec) / 1000000000.0;
-    command_info.maximum_resident_set = usage.ru_maxrss;
 
-    return command_info;
+    if (strcmp(args[1], MIPROF_EJEC) == 0) {
+        /* Si se ejecuto miprof ejec */
+        comando = &args[2];
+        command_info = miprof_ejec(comando);
+
+        printf("\nTiempo de ejecución Usuario: %.5f segundos\n", command_info.tiempo_usuario);
+        printf("Tiempo de ejecución Sistema: %.5f segundos\n", command_info.tiempo_sistema);
+        printf("Tiempo de ejecución Real: %.5f segundos\n", command_info.tiempo_real);
+        printf("Peak de memoria máxima residente: %ld KB\n", command_info.maximum_resident_set);
+    }
+    else if (strcmp(args[1], MIPROF_EJECSAVE) == 0) {
+        /* Si se ejecuto miprof ejecsave*/
+        comando = &args[3];
+        char *file_name = args[2];
+        command_info = miprof_ejec(comando);
+
+        if (command_info.status < 0) {
+            /* Si no se ingreso archivo para guardar */
+            printf("Comando 'miprof %s %s' no válido\n", args[1], args[2]);
+            return CONTINUE;
+        }
+
+        return miprof_ejecsave(file_name, args[3], command_info);
+    }
+    else {
+        /* Si se ingreso mal el comando */
+        printf("Comando 'miprof %s' no válido\n", args[1]);
+        printf("Uso: miprof [ejec | ejecsave archivo] comando args\n");
+    }
+
+    return CONTINUE;
 }

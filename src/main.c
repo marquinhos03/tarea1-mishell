@@ -15,7 +15,7 @@ void shell_interactive() {
     int shell_status = CONTINUE;
 
     do {
-        printf(BOLD BLUE "mishell" RESET "$ ");
+        printf(PROMPT);
         line = read_line();
         args = split_line(line);
         shell_status = execute_args(args);
@@ -74,6 +74,7 @@ int execute_args(char **args) {
 
 int simple_command(char **args) {
     pid_t pid;
+    redirection_info info;
     int status;
     
     pid = fork();
@@ -81,15 +82,12 @@ int simple_command(char **args) {
         /* Proceso hijo */
 
         /* Caso: Hay operador de redirección */
-        redirection_info info;
         info = get_redirection_info(args);
-
         if (info.type != REDIR_NULL) {
             redirect_stdout_to_file(info.type, info.file_name);
         }
 
         execvp(args[0], args);
-
         /* Solo se ejecuta si hay error */
         perror("execvp error en simple_command");
         _exit(EXIT_FAILURE);
