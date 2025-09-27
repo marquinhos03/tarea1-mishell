@@ -1,12 +1,5 @@
 #include "include/shell.h"
 
-// Handler para SIGINT (Ctrl+C)
-void sigint_handler(int sig) {
-    printf("\n"); // Nueva línea después de Ctrl+C
-    printf(PROMPT);
-    fflush(stdout);
-}
-
 int command_exit(char **args) {
     if (args[1]) {
         return atoi(args[1]);
@@ -104,6 +97,7 @@ int simple_command(char **args) {
     pid = fork();
     if (pid == 0) {
         /* Proceso hijo */
+        reset_child_signals();
 
         info = get_redirection_info(args);
         if (info.type != REDIR_NULL) {
@@ -132,6 +126,9 @@ int simple_command(char **args) {
 }
 
 int main() {
+    parent_signals();
+
     shell_interactive();
+    
     return 0;
 }

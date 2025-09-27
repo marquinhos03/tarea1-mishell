@@ -81,4 +81,9 @@ void redirect_stdout_to_file(redirection_type type, char *file_name);
 char **buscar_token(char **args, char *token);
 redirection_info get_redirection_info(char **args);
 
+// signals.c
+void sigint_handler(int sig);
+void parent_signals();
+void reset_child_signals();
+
 #endif
