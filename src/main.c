@@ -1,7 +1,5 @@
 #include "include/shell.h"
 
-
-
 // Handler para SIGINT (Ctrl+C)
 void sigint_handler(int sig) {
     printf("\n"); // Nueva línea después de Ctrl+C
@@ -33,18 +31,7 @@ void shell_interactive() {
     char *line;
     char **args;
     int shell_status = CONTINUE;
-    struct sigaction sa;
 
-    // Configurar handler para SIGINT
-    sa.sa_handler = sigint_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    
-    if (sigaction(SIGINT, &sa, NULL) == -1) {
-        perror("sigaction");
-        exit(EXIT_FAILURE);
-    }
-    
     do {
         printf(PROMPT);
         line = read_line();
@@ -113,15 +100,10 @@ int simple_command(char **args) {
     pid_t pid;
     redirection_info info;
     int status;
-    struct sigaction sa_ignore, sa_default;
     
     pid = fork();
     if (pid == 0) {
-        // Proceso hijo - restaurar handler por defecto para SIGINT
-        sa_default.sa_handler = SIG_DFL;
-        sigemptyset(&sa_default.sa_mask);
-        sa_default.sa_flags = 0;
-        sigaction(SIGINT, &sa_default, NULL);
+        /* Proceso hijo */
 
         info = get_redirection_info(args);
         if (info.type != REDIR_NULL) {
@@ -136,12 +118,7 @@ int simple_command(char **args) {
         perror("error en simple_command: fork");
     }
     else {
-        // Proceso padre - ignorar SIGINT mientras espera al hijo
-        sa_ignore.sa_handler = SIG_IGN;
-        sigemptyset(&sa_ignore.sa_mask);
-        sa_ignore.sa_flags = 0;
-        sigaction(SIGINT, &sa_ignore, NULL);
-        
+        /* Proceso padre */
         do {
             waitpid(pid, &status, WUNTRACED);
             /**
@@ -149,12 +126,6 @@ int simple_command(char **args) {
              * de forma normal o fue terminado por una señal
             */
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-        
-        // Restaurar el handler original después de esperar
-        sa_default.sa_handler = sigint_handler;
-        sigemptyset(&sa_default.sa_mask);
-        sa_default.sa_flags = SA_RESTART;
-        sigaction(SIGINT, &sa_default, NULL);
     }
 
     return CONTINUE;
