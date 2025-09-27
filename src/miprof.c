@@ -7,7 +7,6 @@ char *miprof_messages[] = {
     "Peak de memoria máxima residente: %ld KB\n"
 };
 
-
 int count_args(char **args) {
     int count = 0;
     while (args[count] != NULL) {
@@ -39,6 +38,8 @@ miprof_info miprof_ejec(char **args) {
     pid = fork();
     if (pid == 0) {
         /* Proceso hijo */
+        reset_child_signals();
+
         execvp(args[0], args);
 
         perror("error en execvp");

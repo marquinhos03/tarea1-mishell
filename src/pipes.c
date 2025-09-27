@@ -7,7 +7,7 @@ int contar_comandos_pipeline(char **args) {
             n_comandos++;
         }
     }
-    n_comandos++;   /* +1 para el primer comando */
+    n_comandos++;   // +1 para el primer comando
     return n_comandos;
 }
 
@@ -76,6 +76,7 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
 
         if (pids[i] == 0) {
             /* Proceso hijo */
+            reset_child_signals();
 
             /* Caso 1: Primer comando*/
             if (i == 0) {
