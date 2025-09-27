@@ -1,8 +1,6 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#define _POSIX_C_SOURCE 200809L  // Para características POSIX modernas
-
 /* --- Librerias --- */
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +16,7 @@
 /* --- DEFINES --- */
 #define TOKEN_DELIM " \t\r\n\a\""
 #define CONTINUE -1
+#define MIPROF "miprof"
 #define MIPROF_EJEC "ejec"
 #define MIPROF_EJECSAVE "ejecsave"
 #define MIPROF_EJECUTAR "ejecutar"
@@ -28,19 +27,10 @@
 #define BOLD "\x1b[1m"
 #define PROMPT BOLD LGREEN "mishell" RESET "$ "
 
-// Definir constantes para portabilidad
-#ifndef CLOCK_REALTIME
-#define CLOCK_REALTIME 0
-#endif
-
-#ifndef SA_RESTART
-#define SA_RESTART 0x10000000
-#endif
-
 /* --- Definiciones de tipos --- */
 typedef enum e_redirection_type {
-    REDIR_TRUNC,
-    REDIR_APPEND,
+    REDIR_TRUNC,    // >
+    REDIR_APPEND,   // >>
     REDIR_NULL
 } redirection_type;
 
@@ -59,6 +49,7 @@ typedef struct s_miprof_info {
 
 /* --- Variables globales --- */
 extern char *redirection_string[];
+extern char *miprof_messages[];
 
 /* --- Prototipos de función --- */
 
@@ -79,6 +70,7 @@ int command_exit(char **args);
 int command_cd(char **args);
 
 // miprof.c
+int count_args(char **args);
 int execute_miprof(char **args);
 miprof_info miprof_ejec(char **args);
 int miprof_ejecsave(char *file_name, char *command_name, miprof_info command_info);

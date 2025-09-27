@@ -1,4 +1,4 @@
-#include "../include/shell.h"
+#include "include/shell.h"
 
 int contar_comandos_pipeline(char **args) {
     int n_comandos = 0;

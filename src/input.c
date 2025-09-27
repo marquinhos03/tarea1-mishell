@@ -1,4 +1,4 @@
-#include "../include/shell.h"
+#include "include/shell.h"
 
 /**
  * Leer la linea de entrada por teclado

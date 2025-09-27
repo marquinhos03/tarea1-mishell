@@ -8,6 +8,7 @@ objs
 *.dSYM
 valgrind-out.txt
 
+shell
 *.json
 *.out
 *.txt

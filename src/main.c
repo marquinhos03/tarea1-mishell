@@ -1,8 +1,6 @@
-#include "../include/shell.h"
-#include <signal.h>
+#include "include/shell.h"
 
-// Variable global para controlar la shell
-static volatile sig_atomic_t shell_running = 1;
+
 
 // Handler para SIGINT (Ctrl+C)
 void sigint_handler(int sig) {
@@ -12,7 +10,6 @@ void sigint_handler(int sig) {
 }
 
 int command_exit(char **args) {
-    shell_running = 0;
     if (args[1]) {
         return atoi(args[1]);
     }
@@ -22,7 +19,7 @@ int command_exit(char **args) {
 }
 
 int command_cd(char **args) {
-    if (args[1] == NULL) {
+    if (!args[1]) {
         fprintf(stderr, "cd: se esperaba un argumento\n");
     } else {
         if (chdir(args[1]) != 0) {
@@ -47,8 +44,6 @@ void shell_interactive() {
         perror("sigaction");
         exit(EXIT_FAILURE);
     }
-
-    shell_running = 1;
     
     do {
         printf(PROMPT);
@@ -63,7 +58,7 @@ void shell_interactive() {
             exit(shell_status);
         }
 
-    } while (shell_running);
+    } while (shell_status == CONTINUE);
 }
 
 int execute_args(char **args) {
@@ -77,27 +72,30 @@ int execute_args(char **args) {
         &command_cd
     };
 
-    size_t num_commands = sizeof(integrated_command_list) / sizeof(char *);
-
     if (args[0] == NULL) {
         return CONTINUE;
     }
 
+    size_t num_commands = sizeof(integrated_command_list) / sizeof(char *);
     for(size_t i = 0; i < num_commands; i++) {
         if (strcmp(args[0], integrated_command_list[i]) == 0) {
             return (*integrated_func_list[i])(args);
         }
     }
 
-    if (strcmp(args[0], "miprof") == 0) {
-        if (args[1] == NULL) {
-            printf("Uso: miprof [ejec | ejecsave archivo] comando args\n");
+    /* Si se ejecuto el comando miprof */
+    if (strcmp(args[0], MIPROF) == 0)  {
+        // Si se ingreso solo "miprof"
+        if (!args[1]) {
+            printf("Uso: miprof [ejec | ejecsave archivo] <comando> args\n");
             return CONTINUE;
         }
+
         return execute_miprof(args);
     }
 
     int n_comandos = contar_comandos_pipeline(args);
+    /* Si se ingreso una pipeline */
     if (n_comandos > 1) {
         char ***comandos = parse_pipeline(args, n_comandos);
         int *pipes_arr = crear_pipes(n_comandos);
@@ -146,6 +144,10 @@ int simple_command(char **args) {
         
         do {
             waitpid(pid, &status, WUNTRACED);
+            /**
+             * WIFEXITED() y WIFSIGNALED() distintos de cero (true) si el proceso hijo termino 
+             * de forma normal o fue terminado por una señal
+            */
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         
         // Restaurar el handler original después de esperar

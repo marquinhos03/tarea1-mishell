@@ -1,4 +1,4 @@
-#include "../include/shell.h"
+#include "include/shell.h"
 
 char *redirection_string[] = {
     ">",    // REDIR_TRUNC
