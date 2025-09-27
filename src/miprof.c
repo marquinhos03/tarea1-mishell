@@ -1,4 +1,17 @@
-#include "include/shell.h"
+#include "../include/shell.h"
+#include <sys/time.h>  // Para gettimeofday
+
+// Versión portable de obtener tiempo
+void get_current_time(struct timespec *tp) {
+    #if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
+    clock_gettime(CLOCK_REALTIME, tp);
+    #else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    tp->tv_sec = tv.tv_sec;
+    tp->tv_nsec = tv.tv_usec * 1000;
+    #endif
+}
 
 miprof_info get_miprof_info(struct rusage usage, struct timespec start_time, struct timespec end_time) {
     miprof_info command_info;
@@ -17,7 +30,7 @@ miprof_info miprof_ejec(char **args) {
     int status;
 
     struct timespec start_time, end_time;
-    clock_gettime(CLOCK_REALTIME, &start_time);     // Tiempo inicio
+    get_current_time(&start_time);  // Tiempo inicio
 
     pid = fork();
     if (pid == 0) {
@@ -30,16 +43,32 @@ miprof_info miprof_ejec(char **args) {
     else if (pid < 0) {
         /* Error en fork() */
         perror("error en miprof_ejec: fork");
+        command_info.status = -1;
+        return command_info;
     }
     else {
         /* Proceso padre */
         struct rusage usage;
         
-        do {
-            wait4(pid, &status, WUNTRACED, &usage);
-        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+        // Usar wait3 que es más portable que wait4
+        #if defined(HAVE_WAIT3)
+        wait3(&status, WUNTRACED, &usage);
+        #else
+        // Alternativa con waitpid + getrusage
+        waitpid(pid, &status, WUNTRACED);
+        getrusage(RUSAGE_CHILDREN, &usage);
+        #endif
 
-        clock_gettime(CLOCK_REALTIME, &end_time);   // Tiempo final
+        while (!WIFEXITED(status) && !WIFSIGNALED(status)) {
+            #if defined(HAVE_WAIT3)
+            wait3(&status, WUNTRACED, &usage);
+            #else
+            waitpid(pid, &status, WUNTRACED);
+            getrusage(RUSAGE_CHILDREN, &usage);
+            #endif
+        }
+
+        get_current_time(&end_time);  // Tiempo final
 
         /* Si el proceso hijo falló */
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
@@ -56,20 +85,10 @@ miprof_info miprof_ejec(char **args) {
 }
 
 int miprof_ejecsave(char *file_name, char *command_name, miprof_info command_info) {
-    struct stat st;
-    FILE *file;
-
-    if (stat(file_name, &st) == 0) {
-        /* Si el archivo ya existe*/
-        file = fopen(file_name, "a");
-    }
-    else {
-        file = fopen(file_name, "w");
-    }
-
+    FILE *file = fopen(file_name, "a");
     if (!file) {
         perror("miprof_ejecsave: error al abrir el archivo");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     /* Pasar información al archivo */
@@ -81,17 +100,31 @@ int miprof_ejecsave(char *file_name, char *command_name, miprof_info command_inf
     fprintf(file, "\n");
 
     fclose(file);
-    return CONTINUE;
+    return 0;
 }
 
 int execute_miprof(char **args) {
     char **comando;
     miprof_info command_info;
 
+    if (args[1] == NULL) {
+        printf("Uso: miprof [ejec | ejecsave archivo] comando args\n");
+        return CONTINUE;
+    }
+
     if (strcmp(args[1], MIPROF_EJEC) == 0) {
-        /* Si se ejecuto miprof ejec */
+        if (args[2] == NULL) {
+            printf("Uso: miprof ejec <comando> [args]\n");
+            return CONTINUE;
+        }
+        
         comando = &args[2];
         command_info = miprof_ejec(comando);
+
+        if (command_info.status < 0) {
+            printf("Error al ejecutar el comando\n");
+            return CONTINUE;
+        }
 
         printf("\nTiempo de ejecución Usuario: %.5f segundos\n", command_info.tiempo_usuario);
         printf("Tiempo de ejecución Sistema: %.5f segundos\n", command_info.tiempo_sistema);
@@ -99,21 +132,25 @@ int execute_miprof(char **args) {
         printf("Peak de memoria máxima residente: %ld KB\n", command_info.maximum_resident_set);
     }
     else if (strcmp(args[1], MIPROF_EJECSAVE) == 0) {
-        /* Si se ejecuto miprof ejecsave*/
+        if (args[2] == NULL || args[3] == NULL) {
+            printf("Uso: miprof ejecsave <archivo> <comando> [args]\n");
+            return CONTINUE;
+        }
+        
         comando = &args[3];
         char *file_name = args[2];
         command_info = miprof_ejec(comando);
 
         if (command_info.status < 0) {
-            /* Si no se ingreso archivo para guardar */
-            printf("Comando 'miprof %s %s' no válido\n", args[1], args[2]);
+            printf("Error al ejecutar el comando\n");
             return CONTINUE;
         }
 
-        return miprof_ejecsave(file_name, args[3], command_info);
+        if (miprof_ejecsave(file_name, args[3], command_info) == 0) {
+            printf("Resultados guardados en: %s\n", file_name);
+        }
     }
     else {
-        /* Si se ingreso mal el comando */
         printf("Comando 'miprof %s' no válido\n", args[1]);
         printf("Uso: miprof [ejec | ejecsave archivo] comando args\n");
     }

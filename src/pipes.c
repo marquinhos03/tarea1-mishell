@@ -1,4 +1,4 @@
-#include "include/shell.h"
+#include "../include/shell.h"
 
 int contar_comandos_pipeline(char **args) {
     int n_comandos = 0;
@@ -12,7 +12,7 @@ int contar_comandos_pipeline(char **args) {
 }
 
 char ***parse_pipeline(char **args, int n_comandos) {
-    char ***comandos = malloc((n_comandos + 1) * sizeof(char **));   /* sizeof(char *) -> 8 bytes */
+    char ***comandos = malloc((n_comandos + 1) * sizeof(char **));
     if (!comandos) {
         perror("error al asignar memoria en split_line: comandos\n");
         exit(EXIT_FAILURE);
@@ -79,11 +79,11 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
 
             /* Caso 1: Primer comando*/
             if (i == 0) {
-                dup2(pipes_arr[1], STDOUT_FILENO);  /* 1: pipe extremo lectura */
+                dup2(pipes_arr[1], STDOUT_FILENO);
             }
             /* Caso 2: Ultimo comando */
             else if (i == n_comandos - 1) {                
-                dup2(pipes_arr[(i - 1) * 2], STDIN_FILENO); /* (i - 1) * 2: pipe extremo escritura */
+                dup2(pipes_arr[(i - 1) * 2], STDIN_FILENO);
 
                 /* Caso: Hay operador de redirección */
                 redirection_info info;
@@ -95,8 +95,8 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
             }
             /* Caso 3: Comandos intermedios */
             else {
-                dup2(pipes_arr[(i - 1) * 2], STDIN_FILENO); /* pipe extremo escritura */
-                dup2(pipes_arr[(i * 2) + 1], STDOUT_FILENO);    /* pipe extremo lectura*/
+                dup2(pipes_arr[(i - 1) * 2], STDIN_FILENO);
+                dup2(pipes_arr[(i * 2) + 1], STDOUT_FILENO);
             }
 
             /* Proceso hijo cierra pipes que no va a usar */

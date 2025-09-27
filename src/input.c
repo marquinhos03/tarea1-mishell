@@ -1,4 +1,4 @@
-#include "include/shell.h"
+#include "../include/shell.h"
 
 /**
  * Leer la linea de entrada por teclado
@@ -34,7 +34,7 @@ char *read_line() {
 char **split_line(char *line) {
     int bufsize = 64;
     int c = 0;
-    char **tokens = malloc(bufsize * sizeof(char *));   /* sizeof(char *) -> 8 bytes */
+    char **tokens = malloc(bufsize * sizeof(char *));
     char *token;
 
     if (!tokens) {
