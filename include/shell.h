@@ -16,6 +16,7 @@
 /* --- DEFINES --- */
 #define TOKEN_DELIM " \t\r\n\a\""
 #define CONTINUE -1
+#define NOT_BUILTIN 100
 #define MIPROF "miprof"
 #define MIPROF_EJEC "ejec"
 #define MIPROF_EJECSAVE "ejecsave"
@@ -48,10 +49,26 @@ typedef struct s_miprof_info {
 } miprof_info;
 
 /* --- Variables globales --- */
+
 extern char *redirection_string[];
 extern char *miprof_messages[];
+extern char **environ;
+extern char *integrated_command_list[];
+extern int (*integrated_func_list[])(char **);
 
 /* --- Prototipos de función --- */
+
+// shell_utils.c
+void shell_interactive();
+int execute_args(char **args);
+int simple_command(char **args);
+
+// builtin.c
+int command_help(char **args);
+int command_exit(char **args);
+int command_cd(char **args);
+int command_env(char **args);
+int execute_builtin(char **args);
 
 // input.c
 char *read_line();
