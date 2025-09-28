@@ -70,7 +70,7 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
         pids[i] = fork();
 
         if (pids[i] < 0) {
-            perror("error en ejecutar_pipeline: fork");
+            perror("fork error en ejecutar_pipeline");
             exit(EXIT_FAILURE);
         }
 
@@ -105,6 +105,18 @@ void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos) {
                 close(pipes_arr[j]);
             }
 
+            /* Si hay comandos integrados (Builtins) */
+            if (execute_builtin(comandos[i]) != NOT_BUILTIN) {
+                _exit(EXIT_SUCCESS); 
+            }
+
+            /* Verificar y ejecutar el comando miprof */
+            if (strcmp(comandos[i][0], MIPROF) == 0) {
+                execute_miprof(comandos[i]); 
+                _exit(EXIT_SUCCESS); 
+            }
+
+            /* Comandos externos */
             execvp(comandos[i][0], comandos[i]);
             
             /* Solo se ejecuta si execvp da error */

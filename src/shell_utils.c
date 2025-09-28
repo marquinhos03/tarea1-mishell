@@ -33,17 +33,6 @@ int execute_args(char **args) {
         return builtin_status;
     }
 
-    /* Si se ejecuto el comando miprof */
-    if (strcmp(args[0], MIPROF) == 0)  {
-        // Si se ingreso solo "miprof"
-        if (!args[1]) {
-            printf("Uso: miprof [ejec | ejecsave archivo] <comando> args\n");
-            return CONTINUE;
-        }
-
-        return execute_miprof(args);
-    }
-
     int n_comandos = contar_comandos_pipeline(args);
     /* Si se ingreso una pipeline */
     if (n_comandos > 1) {
@@ -54,6 +43,17 @@ int execute_args(char **args) {
         free(pipes_arr);
         free(comandos);
         return CONTINUE;
+    }
+
+    /* Si se ejecuto el comando miprof */
+    if (strcmp(args[0], MIPROF) == 0)  {
+        // Si se ingreso solo "miprof"
+        if (!args[1]) {
+            printf("Uso: miprof [ejec | ejecsave archivo] <comando> args\n");
+            return CONTINUE;
+        }
+
+        return execute_miprof(args);
     }
 
     return simple_command(args);

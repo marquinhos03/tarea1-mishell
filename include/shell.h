@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <errno.h>
 
 /* --- DEFINES --- */
 #define TOKEN_DELIM " \t\r\n\a\""
@@ -22,6 +23,8 @@
 #define MIPROF_EJECSAVE "ejecsave"
 #define MIPROF_EJECUTAR "ejecutar"
 #define MIPROF_MAXTIEMPO "maxtiempo"
+#define STATUS_TIMEOUT -2
+#define STATUS_EXEC_FAIL -1
 
 #define LGREEN "\x1B[38;2;17;245;120m"
 #define RESET "\x1b[0m"
@@ -80,18 +83,13 @@ char ***parse_pipeline(char **args, int n_comandos);
 int *crear_pipes(int n_comandos);
 void ejecutar_pipeline(int n_comandos, int *pipes_arr, char ***comandos);
 
-// main.c
-int simple_command(char **args);
-int execute_args(char **args);
-int command_exit(char **args);
-int command_cd(char **args);
-
 // miprof.c
 int count_args(char **args);
 int execute_miprof(char **args);
 miprof_info miprof_ejec(char **args);
 int miprof_ejecsave(char *file_name, char *command_name, miprof_info command_info);
 miprof_info get_miprof_info(struct rusage usage, struct timespec start_time, struct timespec end_time);
+miprof_info miprof_ejecutar_maxtiempo(char **args, int maxtiempo);
 
 // redirection.c
 void redirect_stdout_to_file(redirection_type type, char *file_name);
@@ -99,6 +97,7 @@ char **buscar_token(char **args, char *token);
 redirection_info get_redirection_info(char **args);
 
 // signals.c
+void sigalrm_handler(int sig);
 void sigint_handler(int sig);
 void parent_signals();
 void reset_child_signals();
