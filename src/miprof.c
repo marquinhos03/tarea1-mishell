@@ -35,7 +35,8 @@ miprof_info get_miprof_info(struct rusage usage, struct timespec start_time, str
 
 miprof_info miprof_ejec(char **args) {
     pid_t pid;
-    miprof_info info;
+    miprof_info cmd_info;
+    redirection_info redir_info;
     int status;
 
     struct timespec start_time, end_time;
@@ -45,6 +46,11 @@ miprof_info miprof_ejec(char **args) {
     if (pid == 0) {
         /* Proceso hijo */
         reset_child_signals();
+
+        redir_info = get_redirection_info(args);
+        if (redir_info.type != REDIR_NULL) {
+            redirect_stdout_to_file(redir_info.type, redir_info.file_name);
+        }
 
         execvp(args[0], args);
 
@@ -67,16 +73,16 @@ miprof_info miprof_ejec(char **args) {
 
         /* Si el proceso hijo falló */
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-            info.status = STATUS_EXEC_FAIL;
-            return info;
+            cmd_info.status = STATUS_EXEC_FAIL;
+            return cmd_info;
         }
 
         /* Capturar información respecto al tiempo de ejecución */
-        info = get_miprof_info(usage, start_time, end_time);
-        info.status = 0;
+        cmd_info = get_miprof_info(usage, start_time, end_time);
+        cmd_info.status = 0;
     }
 
-    return info;
+    return cmd_info;
 }
 
 
