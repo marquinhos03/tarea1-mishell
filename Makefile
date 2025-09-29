@@ -1,4 +1,4 @@
-NAME = shell
+NAME = mishell
 
 SRCDIR = src
 INCLUDEDIR = include/..
