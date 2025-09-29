@@ -8,7 +8,7 @@ objs
 *.dSYM
 valgrind-out.txt
 
-shell
+mishell
 *.json
 *.out
 *.txt
