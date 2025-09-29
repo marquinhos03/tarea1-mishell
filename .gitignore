@@ -14,3 +14,5 @@ mishell
 *.txt
 src/*
 !src/*.c
+!pruebas/
+!pruebas/*.txt
